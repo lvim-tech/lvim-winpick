@@ -1,0 +1,109 @@
+*lvim-winpick.txt*        Interactive "which window?" for the lvim-tech set
+
+==============================================================================
+CONTENTS                                                     *lvim-winpick*
+
+  1. Introduction ........................... |lvim-winpick-intro|
+  2. Requirements ........................... |lvim-winpick-requirements|
+  3. Setup .................................. |lvim-winpick-setup|
+  4. API .................................... |lvim-winpick-api|
+  5. Filters ................................ |lvim-winpick-filters|
+  6. Command ................................ |lvim-winpick-command|
+  7. Highlights ............................. |lvim-winpick-highlights|
+  8. Health ................................. |lvim-winpick-health|
+
+==============================================================================
+1. INTRODUCTION                                        *lvim-winpick-intro*
+
+lvim-winpick overlays a letter badge on every eligible window and returns the
+window whose letter you press. It is primarily an API for other plugins
+(open-in-window, lvim-winmove's swap) plus a `:LvimWinPick` command.
+
+The prompt is a single modal keystroke read with `getcharstr()` (no timers).
+While picking, the other windows' content is muted through the shared
+lvim-utils dim backdrop so the badges stand out; the badges and backdrop are
+always torn down on every exit path.
+
+==============================================================================
+2. REQUIREMENTS                                 *lvim-winpick-requirements*
+
+Neovim >= 0.10 and lvim-utils (palette + dim backdrop).
+
+==============================================================================
+3. SETUP                                               *lvim-winpick-setup*
+
+setup() is optional — the defaults work. Call it to change options, bind the
+badge highlights, or register |:LvimWinPick|. >lua
+
+    require("lvim-winpick").setup({
+        chars = "fjdkslaghrueiwoqpvnc",
+        autoselect_one = true,
+        include_current = false,
+        hint_position = "center", -- "center" | "top_left"
+        dim = true,
+        dim_amount = 0.55,
+        filters = {
+            buftype = { "nofile", "prompt", "quickfix", "terminal" },
+            filetype = { "lvim-ui-frame", "lvim-utils-ui", "lvim-lsp-outline",
+                         "lvim-dashboard", "neo-tree", "Fyler", "qf", "help" },
+            floating = false,
+        },
+    })
+<
+==============================================================================
+4. API                                                   *lvim-winpick-api*
+
+                                                       *lvim-winpick.pick()*
+require("lvim-winpick").pick({opts})
+    Pick a window interactively; return its id, or nil (cancel / no eligible
+    window). With exactly one eligible window and `autoselect_one`, returns it
+    WITHOUT any UI. `<Esc>`, `<C-c>` or any unassigned key cancels.
+
+    {opts} (optional) are per-call overrides, merged over the config (filters
+    merge key-wise, so the global config is never mutated): >lua
+
+        require("lvim-winpick").pick({ include_current = true })
+        require("lvim-winpick").pick({ filters = { filetype = { "help" } } })
+<
+                                                       *lvim-winpick.jump()*
+require("lvim-winpick").jump({opts})
+    Pick a window and jump to it (what |:LvimWinPick| runs).
+
+==============================================================================
+5. FILTERS                                           *lvim-winpick-filters*
+
+A window is eligible UNLESS a filter rejects it:
+
+    include_current   when false (default), the current window is not offered.
+    filters.floating  when false (default), floating windows are excluded.
+    filters.buftype   excluded 'buftype' values.
+    filters.filetype  excluded 'filetype' values (lvim side panels + common
+                      trees seeded by default).
+    filter_func       function(winids) -> winids — a final caller escape hatch
+                      (per-call only).
+
+==============================================================================
+6. COMMAND                                           *lvim-winpick-command*
+
+                                                            *:LvimWinPick*
+:LvimWinPick
+    Pick a window and jump to it. Registered by setup().
+
+==============================================================================
+7. HIGHLIGHTS                                     *lvim-winpick-highlights*
+
+Self-themed from lvim-utils, overwritable by a colorscheme or your setup:
+
+    LvimWinPickHint         the badge (blue accent on a soft blue block)
+    LvimWinPickHintCurrent  the current window's badge (yellow) when
+                            `include_current`
+
+==============================================================================
+8. HEALTH                                            *lvim-winpick-health*
+
+                                          *:checkhealth-lvim-winpick*
+:checkhealth lvim-winpick
+    Reports the lvim-utils dependency, the config value domains, and a
+    duplicate check on the assignment alphabet.
+
+vim:tw=78:ts=8:ft=help:norl:
