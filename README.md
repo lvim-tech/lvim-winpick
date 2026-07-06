@@ -80,13 +80,12 @@ require("lvim-winpick").setup({
     dim = true, -- mute the other windows while picking
     dim_amount = 0.55, -- backdrop mute fraction toward the editor bg (0..1)
     filters = {
-        buftype = { "nofile", "prompt", "quickfix", "terminal" },
+        buftype = { "prompt", "quickfix", "terminal" }, -- note: "nofile" is NOT excluded (file trees are pickable)
         filetype = {
             "lvim-ui-frame",
             "lvim-utils-ui",
             "lvim-lsp-outline",
             "lvim-dashboard",
-            "neo-tree",
             "Fyler",
             "qf",
             "help",

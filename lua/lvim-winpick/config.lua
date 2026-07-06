@@ -41,13 +41,14 @@ return {
     -- A window is eligible unless a filter rejects it. Seeded to skip the lvim side panels,
     -- common file trees, and non-file scratch/prompt/quickfix buffers.
     filters = {
-        buftype = { "nofile", "prompt", "quickfix", "terminal" },
+        -- Deliberately NOT excluding "nofile": many pickable panels (a file tree, etc.) are
+        -- nofile, and the specific lvim/side panels are excluded by `filetype` below instead.
+        buftype = { "prompt", "quickfix", "terminal" },
         filetype = {
             "lvim-ui-frame",
             "lvim-utils-ui",
             "lvim-lsp-outline",
             "lvim-dashboard",
-            "neo-tree",
             "Fyler",
             "qf",
             "help",
