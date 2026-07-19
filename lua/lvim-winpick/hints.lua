@@ -12,22 +12,46 @@ local api = vim.api
 
 local M = {}
 
--- Badge geometry: a 3×5 block reads as a solid coloured square with the letter centred.
+-- Badge geometry: a 3×5 block reads as a solid coloured square with the letter centred. In a window
+-- smaller than the badge (a thin sidebar, a 1-row cmdwin) the actual size is clamped to the host so
+-- the float never overflows its window — see the min() in show().
 local BADGE_W, BADGE_H = 5, 3
 
---- Compute the badge's (row, col) INSIDE `win` for the chosen position.
+--- Compute the badge's (row, col) INSIDE `win` for the chosen position, given the (possibly clamped)
+--- badge size `w`×`h`.
 ---@param win integer
 ---@param position "center"|"top_left"
+---@param w integer
+---@param h integer
 ---@return integer row, integer col
-local function badge_pos(win, position)
+local function badge_pos(win, position, w, h)
     if position == "top_left" then
         return 0, 0
     end
-    local w = api.nvim_win_get_width(win)
-    local h = api.nvim_win_get_height(win)
-    local row = math.max(0, math.floor(h / 2) - math.floor(BADGE_H / 2))
-    local col = math.max(0, math.floor(w / 2) - math.floor(BADGE_W / 2))
+    local ww = api.nvim_win_get_width(win)
+    local wh = api.nvim_win_get_height(win)
+    local row = math.max(0, math.floor(wh / 2) - math.floor(h / 2))
+    local col = math.max(0, math.floor(ww / 2) - math.floor(w / 2))
     return row, col
+end
+
+--- The badge's content: a `w`×`h` block of spaces with `letter` centred on the middle row.
+---@param letter string
+---@param w integer
+---@param h integer
+---@return string[]
+local function badge_lines(letter, w, h)
+    local lines = {}
+    local mid = math.floor((h - 1) / 2) + 1
+    for i = 1, h do
+        if i == mid and w >= 1 then
+            local left = math.floor((w - 1) / 2)
+            lines[i] = string.rep(" ", left) .. letter .. string.rep(" ", w - 1 - left)
+        else
+            lines[i] = string.rep(" ", w)
+        end
+    end
+    return lines
 end
 
 ---@class LvimWinPickBadge
@@ -44,16 +68,18 @@ function M.show(assignments, opts)
     for _, a in ipairs(assignments) do
         if api.nvim_win_is_valid(a.win) then
             local letter = a.char:upper()
-            local mid = "  " .. letter .. "  "
+            -- Clamp to the host window so a badge never spills past a narrow/short window's bounds.
+            local w = math.min(BADGE_W, math.max(1, api.nvim_win_get_width(a.win)))
+            local h = math.min(BADGE_H, math.max(1, api.nvim_win_get_height(a.win)))
             local buf = api.nvim_create_buf(false, true)
-            api.nvim_buf_set_lines(buf, 0, -1, false, { "     ", mid, "     " })
+            api.nvim_buf_set_lines(buf, 0, -1, false, badge_lines(letter, w, h))
             vim.bo[buf].bufhidden = "wipe"
-            local row, col = badge_pos(a.win, opts.hint_position)
+            local row, col = badge_pos(a.win, opts.hint_position, w, h)
             local ok, win = pcall(api.nvim_open_win, buf, false, {
                 relative = "win",
                 win = a.win,
-                width = BADGE_W,
-                height = BADGE_H,
+                width = w,
+                height = h,
                 row = row,
                 col = col,
                 focusable = false,
