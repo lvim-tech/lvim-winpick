@@ -45,7 +45,7 @@ badge highlights, or register |:LvimWinPick|. >lua
         filters = {
             buftype = { "prompt", "quickfix", "terminal" }, -- "nofile" NOT excluded
             filetype = { "lvim-ui-frame", "lvim-utils-ui", "lvim-lsp-outline",
-                         "lvim-dashboard", "Fyler", "qf", "help" },
+                         "lvim-dashboard", "lvim-files", "qf", "help" },
             floating = false,
         },
     })

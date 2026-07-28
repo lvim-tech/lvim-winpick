@@ -86,7 +86,7 @@ require("lvim-winpick").setup({
             "lvim-utils-ui",
             "lvim-lsp-outline",
             "lvim-dashboard",
-            "Fyler",
+            "lvim-files",
             "qf",
             "help",
         },
